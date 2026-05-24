@@ -1,0 +1,17 @@
+# Environment variables
+.env
+
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Temporary CSV files
+vendas_*.csv
+
+# Output PDFs
+lista-repor.pdf
+
+# OS files
+.DS_Store
+Thumbs.db
