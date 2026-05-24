@@ -33,24 +33,6 @@ def salvar_dados_em_csv(data, vendas):
             escritor_csv.writerow(venda)  # Escreve os dados de cada venda
     print(f"Dados salvos em {caminho_completo}")
 
-def obter_intervalo_dias():
-    """
-    Solicita ao usuário um intervalo de dias do mês para extração de dados.
-
-    Retorno:
-    tuple: (dia_inicio, dia_fim) - Intervalo de dias selecionado pelo usuário.
-    """
-    while True:
-        try:
-            dia_inicio = int(input("Digite o dia inicial do intervalo (1-31): "))
-            dia_fim = int(input("Digite o dia final do intervalo (1-31): "))
-            if 1 <= dia_inicio <= 31 and 1 <= dia_fim <= 31 and dia_inicio <= dia_fim:
-                return dia_inicio, dia_fim
-            else:
-                print("Dias inválidos. Por favor, insira valores entre 1 e 31 e o dia inicial deve ser menor ou igual ao dia final.")
-        except ValueError:
-            print("Entrada inválida. Por favor, insira números inteiros.")
-
 def main():
     """
     Função principal que realiza login, navega na página de vendas,
@@ -60,8 +42,14 @@ def main():
     pin_instalacao = os.getenv("PIN_LOGIN") or input("Qual será o PIN para Login? ")
     senha_instalacao = os.getenv("SENHA_INSTALACAO") or input("Qual será a senha de instalação? ")
     
-    # Solicita o intervalo de dias do mês
-    dia_inicio, dia_fim = obter_intervalo_dias()
+    # Obtém o intervalo de dias do arquivo .env
+    try:
+        dia_inicio = int(os.getenv("DIA_INICIAL", 1))
+        dia_fim = int(os.getenv("DIA_FINAL", 31))
+        print(f"Intervalo de datas configurado via .env: {dia_inicio} até {dia_fim}")
+    except ValueError:
+        print("Erro ao ler DIA_INICIAL ou DIA_FINAL do .env. Usando padrão 1-31.")
+        dia_inicio, dia_fim = 1, 31
     
     # Inicia o navegador e faz login
     driver = iniciar_navegador()
