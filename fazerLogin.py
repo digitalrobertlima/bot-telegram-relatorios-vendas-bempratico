@@ -11,7 +11,15 @@ from dotenv import load_dotenv
 load_dotenv()
 
 def iniciar_navegador():
-    driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()))
+    chrome_options = Options()
+    # Remove logs de erro do sistema do Chrome (como GCM, TensorFlow, etc)
+    chrome_options.add_argument('--log-level=3') 
+    chrome_options.add_experimental_option('excludeSwitches', ['enable-logging'])
+    
+    driver = webdriver.Chrome(
+        service=Service(ChromeDriverManager().install()), 
+        options=chrome_options
+    )
     return driver
 
 def fazer_login(driver, pin_instalação, senha_instalação):
