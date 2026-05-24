@@ -11,20 +11,27 @@ from selenium.webdriver.support import expected_conditions as EC
 
 def salvar_dados_em_csv(data, vendas):
     """
-    Salva os dados de vendas em um arquivo CSV.
+    Salva os dados de vendas em um arquivo CSV dentro da pasta csv_exports.
 
     Parâmetros:
     data (str): Data no formato para nome do arquivo.
     vendas (list): Lista de listas contendo dados de vendas.
     """
+    # Garante que a pasta csv_exports existe
+    pasta_exports = "csv_exports"
+    if not os.path.exists(pasta_exports):
+        os.makedirs(pasta_exports)
+
     data_formatada = data.replace("/", "-")  # Substitui barras por hífens para o nome do arquivo
     nome_arquivo = f"vendas_{data_formatada}.csv"
-    with open(nome_arquivo, mode='w', newline='', encoding='utf-8') as arquivo:
+    caminho_completo = os.path.join(pasta_exports, nome_arquivo)
+    
+    with open(caminho_completo, mode='w', newline='', encoding='utf-8') as arquivo:
         escritor_csv = csv.writer(arquivo)
         escritor_csv.writerow(["Produto", "Quantidade", "Valor"])  # Cabeçalho do arquivo CSV
         for venda in vendas:
             escritor_csv.writerow(venda)  # Escreve os dados de cada venda
-    print(f"Dados salvos em {nome_arquivo}")
+    print(f"Dados salvos em {caminho_completo}")
 
 def obter_intervalo_dias():
     """
