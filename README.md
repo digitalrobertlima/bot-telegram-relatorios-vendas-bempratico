@@ -9,37 +9,38 @@ Este sistema é uma ferramenta de automação desenvolvida para extrair dados de
 ## 🚀 Funcionalidades
 
 - **Automação de Login**: Realiza o fluxo completo de autenticação (E-mail $\rightarrow$ Senha $\rightarrow$ PIN) utilizando Selenium WebDriver.
-- **Extração Dinâmica de Dados**: Permite que o usuário defina um intervalo de dias para a extração de relatórios de vendas.
-- **Persistência em CSV**: Exporta as vendas de cada dia para arquivos CSV individuais (`vendas_DD-MM-YYYY.csv`), garantindo a integridade dos dados brutos.
-- **Análise de Dados**: Consolida as vendas de múltiplos dias, tratando diferentes unidades de medida (como "Kg") e normalizando quantidades.
+- **Extração Totalmente Automatizada**: O intervalo de datas é configurado via arquivo `.env`, eliminando a necessidade de interação manual no terminal.
+- **Persistência Organizada**: Exporta as vendas de cada dia para arquivos CSV individuais dentro da pasta `csv_exports/`, mantendo a raiz do projeto limpa.
+- **Análise de Dados Modular**: Consolida as vendas de múltiplos dias, tratando diferentes unidades de medida (como "Kg") e normalizando quantidades.
 - **Inteligência de Reabastecimento**: Identifica automaticamente os produtos mais vendidos no período selecionado.
 - **Notificações em Tempo Real**: Envia via Telegram a lista dos top produtos para reabastecimento.
 - **Relatórios Profissionais**: Gera automaticamente um arquivo PDF formatado em modo paisagem com a lista detalhada de itens a repor.
 
 ## 🛠️ Arquitetura do Sistema
 
-O fluxo de execução segue a seguinte pipeline:
+O sistema foi refatorado para seguir o princípio de responsabilidade única, dividindo a lógica em módulos independentes:
 
-1.  **Módulo de Autenticação (`fazerLogin.py`)**: Inicia o navegador e realiza o login no portal.
-2.  **Módulo de Extração (`main.py`)**: 
-    - Navega até o centro de relatórios.
-    - Filtra as datas conforme escolha do usuário.
-    - Faz o *scraping* das tabelas de pedidos.
-    - Salva os dados em arquivos `.csv`.
-3.  **Módulo de Processamento e Notificação (`listarTelegram.py`)**:
-    - Lê todos os CSVs gerados.
-    - Agrega as quantidades totais por produto.
-    - Ordena os produtos por volume de vendas.
-    - Gera um PDF profissional via `reportlab`.
-    - Envia a mensagem de resumo e o PDF via Telegram Bot API.
+1.  **Autenticação (`fazerLogin.py`)**: Inicia o navegador e realiza o login no portal.
+2.  **Orquestração de Extração (`main.py`)**: 
+    - Lê as configurações de data do `.env`.
+    - Navega até o centro de relatórios e realiza o *scraping*.
+    - Salva os dados brutos em `csv_exports/`.
+3.  **Processamento de Dados (`csv_processor.py`)**:
+    - Lê todos os CSVs da pasta de exportação.
+    - Agrega totais de vendas e identifica o intervalo de datas processado.
+4.  **Geração de Documentos (`pdf_generator.py`)**:
+    - Transforma os dados processados em um relatório PDF profissional via `reportlab`.
+5.  **Comunicação (`telegram_notifier.py`)**:
+    - Interface com a API do Telegram para envio de mensagens de texto e arquivos PDF.
+6.  **Fluxo de Notificação (`listarTelegram.py`)**:
+    - Coordena a ponte entre o processador de CSVs, o gerador de PDF e o notificador do Telegram.
 
 ## 📦 Instalação e Configuração
 
 ### 1. Pré-requisitos
 - Python 3.x instalado.
-- Google Chrome instalado (o driver é gerenciado automaticamente pelo `webdriver-manager`).
-- Um Bot do Telegram criado via `@BotFather` (para obter o Token).
-- O seu `Chat ID` do Telegram.
+- Google Chrome instalado.
+- Bot do Telegram criado via `@BotFather`.
 
 ### 2. Clonando o Repositório
 ```bash
@@ -48,19 +49,12 @@ cd realtorio_vendas_telegram
 ```
 
 ### 3. Dependências
-Recomenda-se o uso de um ambiente virtual:
 ```bash
-python -m venv venv
-# Windows:
-.\venv\Scripts\activate
-# Linux/Mac:
-source venv/bin/activate
-
 pip install -r requirements.txt
 ```
 
 ### 4. Variáveis de Ambiente
-Crie um arquivo `.env` na raiz do projeto baseado no `.env.example`:
+Crie um arquivo `.env` na raiz do projeto com as seguintes chaves:
 ```env
 # Credenciais de Login do Sistema
 EMAIL_LOGIN=seu_email@exemplo.com
@@ -70,33 +64,38 @@ PIN_LOGIN=seu_pin_de_login
 # Configurações do Bot do Telegram
 TELEGRAM_TOKEN=seu_token_do_bot_aqui
 TELEGRAM_CHAT_ID=seu_chat_id_aqui
+
+# Automação do Intervalo de Datas
+DIA_INICIAL=1
+DIA_FINAL=31
 ```
 
 ## 📖 Como Utilizar
 
-Para iniciar o processo de extração e notificação, execute o script principal:
+Para iniciar o processo completo, execute:
 
 ```bash
 python main.py
 ```
 
-**Passo a passo durante a execução:**
-1. O sistema solicitará o **PIN de Login** e a **Senha** (caso não estejam no `.env`).
-2. O sistema solicitará o **dia inicial** e o **dia final** do intervalo de vendas (ex: início 1, fim 5 para pegar a primeira semana do mês).
-3. O navegador abrirá automaticamente, fará o login, extrairá os dados e fechará.
-4. Ao final, você receberá no seu Telegram a lista de reabastecimento e o PDF `lista-repor.pdf`.
+**Fluxo Automático:**
+1. O sistema lê as datas do `.env`.
+2. Realiza o login e extrai as vendas para `csv_exports/`.
+3. Processa os arquivos, gera o PDF `lista-repor.pdf`.
+4. Envia o resumo e o PDF para o Telegram.
 
 ## 📂 Estrutura de Arquivos
 
 | Arquivo | Descrição |
 | :--- | :--- |
-| `main.py` | Ponto de entrada do sistema e orquestrador de extração. |
+| `main.py` | Ponto de entrada e orquestrador de extração. |
 | `fazerLogin.py` | Lógica de autenticação via Selenium. |
-| `listarTelegram.py` | Processamento de CSVs, geração de PDF e integração com API do Telegram. |
+| `csv_processor.py` | Lógica de leitura e agregação de dados CSV. |
+| `pdf_generator.py` | Lógica de criação do relatório PDF. |
+| `telegram_notifier.py` | Interface de comunicação com a API do Telegram. |
+| `listarTelegram.py` | Orquestrador do fluxo de processamento $\rightarrow$ PDF $\rightarrow$ Telegram. |
+| `csv_exports/` | Pasta onde ficam armazenados os CSVs de vendas. |
 | `requirements.txt` | Lista de dependências do projeto. |
-| `.env` | Configurações sensíveis e credenciais (não versionado). |
-| `testeBot.py` | Script utilitário para testar a conexão com o bot. |
-| `debug_run.py` | Script para testes de execução e depuração. |
 
 ## ⚖️ Licença
 
